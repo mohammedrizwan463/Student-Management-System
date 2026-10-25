@@ -1,7 +1,8 @@
+
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: 'https://student-management-system-4tgo.onrender.com/api',
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -27,7 +28,7 @@ API.interceptors.response.use(
   }
 );
 
-// ===== Auth API =====
+// Auth API
 export const authAPI = {
   register: (data) => API.post('/auth/register', data),
   login: (data) => API.post('/auth/login', data),
@@ -35,7 +36,7 @@ export const authAPI = {
   logout: () => API.post('/auth/logout'),
 };
 
-// ===== Students API =====
+// Students API
 export const studentsAPI = {
   getAll: (params) => API.get('/students', { params }),
   getById: (id) => API.get(`/students/${id}`),
