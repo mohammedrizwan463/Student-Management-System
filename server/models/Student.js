@@ -86,13 +86,19 @@ const studentSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Auto-generate student ID if not provided
-studentSchema.pre('save', async function (next) {
-  if (!this.studentId) {
-    const count = await mongoose.model('Student').countDocuments();
-    this.studentId = `STU${String(count + 1).padStart(4, '0')}`;
+// Auto-generate student ID if not provided before validation
+studentSchema.pre('validate', async function () {
+  if (!this.studentId || !this.studentId.trim()) {
+    let nextNum = (await mongoose.model('Student').countDocuments()) + 1;
+    let candidate = `STU${String(nextNum).padStart(4, '0')}`;
+    while (await mongoose.model('Student').findOne({ studentId: candidate })) {
+      nextNum += 1;
+      candidate = `STU${String(nextNum).padStart(4, '0')}`;
+    }
+    this.studentId = candidate;
+  } else {
+    this.studentId = this.studentId.trim().toUpperCase();
   }
-  next();
 });
 
 module.exports = mongoose.model('Student', studentSchema);

@@ -63,10 +63,10 @@ export default function DashboardPage() {
     datasets: [{
       label: 'Students',
       data: [
-        stats.activeStudents,
-        stats.graduatedStudents,
-        stats.inactiveStudents,
-        stats.totalStudents - stats.activeStudents - stats.graduatedStudents - stats.inactiveStudents,
+        stats.activeStudents || 0,
+        stats.graduatedStudents || 0,
+        stats.inactiveStudents || 0,
+        stats.suspendedStudents || 0,
       ],
       backgroundColor: ['#10b981', '#3b82f6', '#94a3b8', '#ef4444'],
       borderRadius: 8,

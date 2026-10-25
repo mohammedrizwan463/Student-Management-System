@@ -86,6 +86,16 @@ export default function StudentFormModal({ student, onSave, onClose }) {
         gpa: Number(form.gpa),
       };
 
+      if (!payload.studentId || !payload.studentId.trim()) {
+        delete payload.studentId;
+      } else {
+        payload.studentId = payload.studentId.trim().toUpperCase();
+      }
+
+      if (!payload.dateOfBirth) {
+        delete payload.dateOfBirth;
+      }
+
       if (isEdit) {
         await studentsAPI.update(student._id, payload);
         toast.success('Student updated successfully! ✏️');

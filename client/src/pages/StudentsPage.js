@@ -5,7 +5,7 @@ import { studentsAPI } from '../api';
 import {
   FiPlus, FiSearch, FiEdit2, FiTrash2, FiEye,
   FiFilter, FiX, FiChevronLeft, FiChevronRight,
-  FiUsers, FiRefreshCw, FiDownload,
+  FiUsers, FiRefreshCw,
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import StudentFormModal from '../components/StudentFormModal';

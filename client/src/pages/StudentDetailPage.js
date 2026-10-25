@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { studentsAPI } from '../api';
@@ -43,7 +43,7 @@ export default function StudentDetailPage() {
   const [showDelete, setShowDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const fetchStudent = async () => {
+  const fetchStudent = useCallback(async () => {
     setLoading(true);
     try {
       const res = await studentsAPI.getById(id);
@@ -54,9 +54,11 @@ export default function StudentDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, navigate]);
 
-  useEffect(() => { fetchStudent(); }, [id]);
+  useEffect(() => {
+    fetchStudent();
+  }, [fetchStudent]);
 
   const handleDelete = async () => {
     setDeleting(true);

@@ -1,6 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { FiBook, FiGithub, FiHeart } from 'react-icons/fi';
+import { FiBook, FiHeart } from 'react-icons/fi';
 
 export default function Footer() {
   return (

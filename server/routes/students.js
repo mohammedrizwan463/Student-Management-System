@@ -72,12 +72,16 @@ router.get('/stats', async (req, res) => {
       totalStudents,
       activeStudents,
       graduatedStudents,
+      inactiveStudents,
+      suspendedStudents,
       departmentStats,
       avgGpa,
     ] = await Promise.all([
       Student.countDocuments(),
       Student.countDocuments({ status: 'Active' }),
       Student.countDocuments({ status: 'Graduated' }),
+      Student.countDocuments({ status: 'Inactive' }),
+      Student.countDocuments({ status: 'Suspended' }),
       Student.aggregate([
         { $group: { _id: '$department', count: { $sum: 1 } } },
         { $sort: { count: -1 } },
@@ -94,9 +98,10 @@ router.get('/stats', async (req, res) => {
         totalStudents,
         activeStudents,
         graduatedStudents,
-        inactiveStudents: totalStudents - activeStudents - graduatedStudents,
+        inactiveStudents,
+        suspendedStudents,
         departmentStats,
-        avgGpa: avgGpa[0]?.avgGpa?.toFixed(2) || 0,
+        avgGpa: avgGpa[0]?.avgGpa ? avgGpa[0].avgGpa.toFixed(2) : '0.00',
       },
     });
   } catch (error) {
@@ -147,11 +152,13 @@ router.post(
           return res.status(400).json({ message: 'A student with this email already exists' });
         }
       }
-      if (req.body.studentId) {
-        const existing = await Student.findOne({ studentId: req.body.studentId.toUpperCase() });
+      if (req.body.studentId && req.body.studentId.trim()) {
+        const existing = await Student.findOne({ studentId: req.body.studentId.trim().toUpperCase() });
         if (existing) {
           return res.status(400).json({ message: 'A student with this ID already exists' });
         }
+      } else {
+        delete req.body.studentId;
       }
 
       const student = await Student.create({
@@ -187,6 +194,13 @@ router.put('/:id', async (req, res) => {
       }
     }
 
+    if (req.body.studentId && req.body.studentId.trim().toUpperCase() !== student.studentId) {
+      const existing = await Student.findOne({ studentId: req.body.studentId.trim().toUpperCase() });
+      if (existing) {
+        return res.status(400).json({ message: 'A student with this ID already exists' });
+      }
+    }
+
     const updatedStudent = await Student.findByIdAndUpdate(
       req.params.id,
       { ...req.body },
@@ -195,6 +209,9 @@ router.put('/:id', async (req, res) => {
 
     res.json({ success: true, message: 'Student updated successfully', student: updatedStudent });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({ message: 'Student ID or email already exists' });
+    }
     if (error.name === 'CastError') {
       return res.status(404).json({ message: 'Student not found' });
     }
