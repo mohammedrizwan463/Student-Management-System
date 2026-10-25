@@ -1,3 +1,4 @@
+
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
@@ -7,9 +8,13 @@ const { protect } = require('../middleware/auth');
 
 // Generate JWT Token
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE,
-  });
+  return jwt.sign(
+    { id },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: process.env.JWT_EXPIRE || '7d',
+    }
+  );
 };
 
 // @route   POST /api/auth/register
@@ -26,21 +31,36 @@ router.post(
   ],
   async (req, res) => {
     const errors = validationResult(req);
+
     if (!errors.isEmpty()) {
-      return res.status(400).json({ message: errors.array()[0].msg });
+      return res.status(400).json({
+        message: errors.array()[0].msg,
+      });
     }
 
     const { name, email, password, role } = req.body;
 
     try {
-      const existingUser = await User.findOne({ email });
+      const normalizedEmail = email.trim().toLowerCase();
+
+      const existingUser = await User.findOne({
+        email: normalizedEmail,
+      });
+
       if (existingUser) {
-        return res.status(400).json({ message: 'User with this email already exists' });
+        return res.status(400).json({
+          message: 'User with this email already exists',
+        });
       }
 
-      const user = await User.create({ name, email, password, role });
+      const user = await User.create({
+        name,
+        email: normalizedEmail,
+        password,
+        role,
+      });
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
         message: 'Registration successful',
         token: generateToken(user._id),
@@ -52,8 +72,12 @@ router.post(
         },
       });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Server error', error: error.message });
+      console.error('Registration error:', error);
+
+      return res.status(500).json({
+        message: 'Server error',
+        error: error.message,
+      });
     }
   }
 );
@@ -69,24 +93,37 @@ router.post(
   ],
   async (req, res) => {
     const errors = validationResult(req);
+
     if (!errors.isEmpty()) {
-      return res.status(400).json({ message: errors.array()[0].msg });
+      return res.status(400).json({
+        message: errors.array()[0].msg,
+      });
     }
 
     const { email, password } = req.body;
 
     try {
-      const user = await User.findOne({ email }).select('+password');
+      const normalizedEmail = email.trim().toLowerCase();
+
+      const user = await User.findOne({
+        email: normalizedEmail,
+      }).select('+password');
+
       if (!user) {
-        return res.status(401).json({ message: 'Invalid email or password' });
+        return res.status(401).json({
+          message: 'Invalid email or password',
+        });
       }
 
       const isMatch = await user.matchPassword(password);
+
       if (!isMatch) {
-        return res.status(401).json({ message: 'Invalid email or password' });
+        return res.status(401).json({
+          message: 'Invalid email or password',
+        });
       }
 
-      res.json({
+      return res.json({
         success: true,
         message: 'Login successful',
         token: generateToken(user._id),
@@ -98,24 +135,34 @@ router.post(
         },
       });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Server error', error: error.message });
+      console.error('Login error:', error);
+
+      return res.status(500).json({
+        message: 'Server error',
+        error: error.message,
+      });
     }
   }
 );
 
 // @route   GET /api/auth/me
-// @desc    Get current logged in user
+// @desc    Get current logged-in user
 // @access  Private
 router.get('/me', protect, async (req, res) => {
-  res.json({ success: true, user: req.user });
+  return res.json({
+    success: true,
+    user: req.user,
+  });
 });
 
 // @route   POST /api/auth/logout
-// @desc    Logout (client just deletes token)
+// @desc    Logout (client removes token)
 // @access  Private
 router.post('/logout', protect, (req, res) => {
-  res.json({ success: true, message: 'Logged out successfully' });
+  return res.json({
+    success: true,
+    message: 'Logged out successfully',
+  });
 });
 
 module.exports = router;
